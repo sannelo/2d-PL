@@ -1,0 +1,9 @@
+{49: True, 50: True, 51: True, 52: True}
+{49: False, 50: True, 51: True, 52: True}
+{49: False, 50: False, 51: True, 52: True}
+{49: False, 50: False, 51: False, 52: True}
+{49: False, 50: False, 51: False, 52: False}
+{49: True, 50: False, 51: False, 52: False}
+{49: True, 50: True, 51: False, 52: False}
+{49: True, 50: True, 51: True, 52: False}
+{49: True, 50: True, 51: True, 52: True}
