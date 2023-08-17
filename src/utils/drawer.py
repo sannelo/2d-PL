@@ -80,8 +80,8 @@ def get_grid(offset: tuple[int, int], grid_scale: int, win_size: tuple[int, int]
 
 
         lines_cord.append(Vector2(width, 0))
-        lines_cord.append(Vector2(width, height))
-        lines_cord.append(Vector2(width, 0))
+        # lines_cord.append(Vector2(width, height))
+        # lines_cord.append(Vector2(width, 0))
         lines_cord.append(Vector2(0, 0))
         
         # grid_scale_y = round(self.BLOCK_SIZE * self.player_scale) # height / 
@@ -94,9 +94,9 @@ def get_grid(offset: tuple[int, int], grid_scale: int, win_size: tuple[int, int]
             lines_cord.append(Vector2(width + x, y + grid_scale))
             lines_cord.append(Vector2(x, y + grid_scale))
         
-        lines_cord.append(Vector2(0, height))
-        lines_cord.append(Vector2(width, height))
-        lines_cord.append(Vector2(0, height))
-        lines_cord.append(Vector2(0, 0))
+        # lines_cord.append(Vector2(0, height))
+        # lines_cord.append(Vector2(width, height))
+        # lines_cord.append(Vector2(0, height))
+        # lines_cord.append(Vector2(0, 0))
 
         return lines_cord

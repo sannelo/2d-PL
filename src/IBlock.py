@@ -14,10 +14,12 @@ class IBlock(ABC):
     size: Vector2 = Vector2(50, 50)
 
     color: Color = Color(125, 125, 125)
+    image: Surface
 
     def __init__(self, pos: Vector2, size: Vector2) -> None:
         self.pos = pos
         self.size = size
+        self.image = pygame.image.load(f"./imgs/{self.NAME.lower()}.png").convert_alpha()
 
     @abstractmethod
     def update(self) -> bool:
@@ -54,7 +56,8 @@ class IBlock(ABC):
                 round(self.size.y * scale, 3)
             )
         pygame.draw.rect(win, self.color, rect=rect)
-
+        # self.image.set_clip(rect)
+        win.blit(pygame.transform.scale(self.image, (rect[2], rect[3])), rect)
         # font = pygame.font.Font(None, round(14*scale))
         # text_surface = font.render(str(self.pos), True, (0, 0, 0))
         # text_pos = Vector2(

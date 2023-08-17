@@ -1,14 +1,19 @@
 from typing import Dict, Generic, TypeVar
-from blocks._blocks import NewVar, NoneBlock
+from src.blocks._blocks import NewVar, NoneBlock, Start
 
 from enum import Enum
 
 class BlockType(Enum):
     NONEBLOCK = NoneBlock
     NEW_VAR_BLOCK = NewVar
+    START = Start
 
 ALL_BLOCKS = {**{block.value.NAME: block.value for block in BlockType}}
-print(ALL_BLOCKS)
+ALL_BLOCKS_TYPE = TypeVar("ALL_BLOCKS_TYPE", *(block.value for block in BlockType)) # type: ignore
+
+def get_by_index(index: int):
+    block = ALL_BLOCKS.get(list(ALL_BLOCKS.keys())[index % len(ALL_BLOCKS.keys())])
+    return block if block else NoneBlock
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")
@@ -30,6 +35,9 @@ class Blocks(Generic[_KT, _VT]):
     def clear(self):
         self.blocks.clear()
 
+    def pop(self, key: _KT):
+        return self.blocks.pop(key, None)
+
     def values(self):
         return self.blocks.values()
     
@@ -42,19 +50,19 @@ class Blocks(Generic[_KT, _VT]):
     def get(self, key: _KT):
         return self.blocks.get(key)
 
-if __name__ == "__main__":
-    blocks = Blocks[str, bool | int]()
+# if __name__ == "__main__":
+#     blocks = Blocks[str, bool | int]()
 
-    # setattr(blocks, 'new_method', lambda x: [print(to) for to in x])
+#     # setattr(blocks, 'new_method', lambda x: [print(to) for to in x])
 
-    blocks["123"] = True # Обращение к Blocks.blocks
+#     blocks["123"] = True # Обращение к Blocks.blocks
 
-    blocks.update(
-        **{
-            "abs": 123
-        }
-    )
+#     blocks.update(
+#         **{
+#             "abs": 123
+#         }
+#     )
 
-    var = blocks["123"]
+#     var = blocks["123"]
 
-    print(blocks, blocks["1234"])
+#     print(blocks, blocks["1234"])

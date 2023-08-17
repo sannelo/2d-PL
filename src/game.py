@@ -1,6 +1,7 @@
+import datetime
 from pygame import Color, Surface, Vector2
 from src.IBlock import IBlock
-from src.blocks import NoneBlock, Blocks
+from src.blocks import NoneBlock, Blocks, ALL_BLOCKS, ALL_BLOCKS_TYPE, get_by_index
 from src.utils.engine import Engine
 from src.utils.drawer import get_grid
 from src.utils.other import rgb, str2Vec, vec2str, Coordinate
@@ -10,14 +11,15 @@ import pygame
 class Game(Engine):
 
     blocks: Blocks[str, IBlock] = Blocks[str, IBlock]()
-    select_block: IBlock
+
+    select_block: int = 0
 
     player_pos = Vector2(0, 0)
     player_scale = 1.0
 
     DEBUG = True
 
-    BLOCK_SIZE = 100
+    BLOCK_SIZE = 50
     SPEED = 10
     SPRENT_SPEED = 10
 
@@ -37,7 +39,7 @@ class Game(Engine):
                 depth: int = 0,
                 display: int = 0,
                 vsync: int = 0,
-                FPS: int = 0) -> None:
+                FPS: int = 60) -> None:
         
         pygame.init()
         win = pygame.display.set_mode(size, flags, depth, display, vsync)
@@ -50,7 +52,7 @@ class Game(Engine):
         pass
 
     def update(self, _):
-        pygame.display.set_caption(f"Scale: {round(self.player_scale, 2)} Position: {self.player_pos} FPS: {self.FPS_NOW} MAX FPS: {self.FPS_MAX} MAX FPS: {self.FPS_MIN}")
+        pygame.display.set_caption(f"Selected: {get_by_index(self.select_block).__name__} Scale: {round(self.player_scale, 2)} Position: {self.player_pos} {self.FPS_NOW}:{self.FPS_MAX}:{self.FPS_MIN}")
 
         self.width = self.win.get_width()
         self.height = self.win.get_height()
@@ -84,17 +86,38 @@ class Game(Engine):
             self.player_scale = 1.0
         if self.get_hotkey(pygame.K_LCTRL, pygame.K_c):
             self.blocks.clear()
+        if self.get_hotkey(pygame.K_LSHIFT, pygame.K_p):
+            now = datetime.datetime.now()
+            formatted_date = now.strftime("%d-%m-%Y_%S:%M:%H")
+            pygame.image.save(self.win, f"./screenshots/{formatted_date}.png")
+
         if pygame.K_F1 in keys_down:
             self.DEBUG = not self.DEBUG
 
         if 1 in mouse_down:
             self.add_block()
+
+        if 3 in mouse_down:
+            self.remove_block()
+
+        if pygame.K_LEFT in keys_down:
+            self.select_block -= 1
+        elif pygame.K_RIGHT in keys_down:
+            self.select_block += 1
         
         if self.get_hotkey(pygame.K_LSHIFT, pygame.K_1, pygame.K_2, pygame.K_3):
-            print("Hello world!")
+            print(self.blocks)
         
         if self.get_input(pygame.K_RSHIFT): self.add_block()
     
+    def remove_block(self):
+        pos = Vector2(
+            (round((self.block_pos.x - self.player_pos.x) / self.player_scale) // self.BLOCK_SIZE) * self.BLOCK_SIZE,
+            (round((self.block_pos.y - self.player_pos.y) / self.player_scale) // self.BLOCK_SIZE) * self.BLOCK_SIZE,
+        ) 
+
+        self.blocks.pop(vec2str(pos))
+
     def add_block(self):
         # ((offset // block_size) * block_size)
         pos = Vector2(
@@ -105,14 +128,15 @@ class Game(Engine):
 
         pos_key = vec2str(pos)
 
-        if self.blocks.get(pos_key): return
+        if type(self.blocks.get(pos_key)) == get_by_index(self.select_block): return
         
         size = Vector2(
             self.BLOCK_SIZE,
             self.BLOCK_SIZE
         )
 
-        self.blocks[pos_key] = NoneBlock(pos, size)
+        self.blocks[pos_key] = get_by_index(self.select_block)(pos, size)
+         # type: ignore
         print("Block added in pos:", pos_key)
 
     def draw(self):
@@ -194,7 +218,7 @@ class Game(Engine):
             round(self.player_pos.y % self.block_size)
         )
         lines_cord = get_grid(offset, self.block_size, (self.width, self.height))
-        pygame.draw.lines(self.win, self.GRID_COLOR, False, lines_cord, width=round(6*self.player_scale))
+        pygame.draw.lines(self.win, self.GRID_COLOR, False, lines_cord, width=2) # round(6*self.player_scale)
     
     def grid_alignment(self, pos: Vector2):
         offset = Vector2(
