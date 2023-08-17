@@ -10,6 +10,7 @@ import pygame
 class Game(Engine):
 
     blocks: Blocks[str, IBlock] = Blocks[str, IBlock]()
+    select_block: IBlock
 
     player_pos = Vector2(0, 0)
     player_scale = 1.0

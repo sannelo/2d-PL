@@ -59,6 +59,12 @@ class Engine(ABC):
         return not not self.input_keys.get(str(key))
     
     def get_hotkey(self, *keys: int):
+        """
+        Checks if the passed arguments are hotkeys.
+
+        :param keys: Integers representing hotkeys.
+        :return: True if all passed arguments are hotkeys.
+        """
         return all((self.input_keys.get(str(keys[i])) if i < len(keys) - 1 else keys[-1] in self.keys_down) for i in range(len(keys)))
 
     def _set_input(self, key: int, pressed=True):

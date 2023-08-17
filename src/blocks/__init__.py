@@ -1,12 +1,14 @@
 from typing import Dict, Generic, TypeVar
-if __name__ != "__main__":
-    from src.blocks.new_var import NewVar
-    from src.blocks.none import NoneBlock
-    from enum import Enum
+from blocks._blocks import NewVar, NoneBlock
 
-    class BlockType(Enum):
-        NONEBLOCK = NoneBlock
-        NEW_VAR_BLOCK = NewVar
+from enum import Enum
+
+class BlockType(Enum):
+    NONEBLOCK = NoneBlock
+    NEW_VAR_BLOCK = NewVar
+
+ALL_BLOCKS = {**{block.value.NAME: block.value for block in BlockType}}
+print(ALL_BLOCKS)
 
 _KT = TypeVar("_KT")
 _VT = TypeVar("_VT")

@@ -6,7 +6,8 @@ from pygame import Color
 
 
 class IBlock(ABC):
-    # __metaclass__=ABCMeta
+
+    NAME = "INTERFACE"
 
     
     pos: Vector2 = Vector2(0, 0)
