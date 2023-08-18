@@ -1,3 +1,4 @@
+import pickle
 from typing import Dict, Generic, TypeVar
 from src.blocks._blocks import NewVar, NoneBlock, Start
 
@@ -49,6 +50,14 @@ class Blocks(Generic[_KT, _VT]):
 
     def get(self, key: _KT):
         return self.blocks.get(key)
+    
+    def save(self, filename: str = "save.pk"):
+        with open(filename, 'wb') as f:
+            pickle.dump(self.blocks, f)
+
+    def load(self, filename: str = "./saves/save.pk"):
+        with open(filename, 'rb') as f:
+            self.blocks = pickle.load(f)
 
 # if __name__ == "__main__":
 #     blocks = Blocks[str, bool | int]()

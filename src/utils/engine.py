@@ -3,12 +3,16 @@ import json
 from pygame import Color, Surface, Vector2
 from pygame.event import Event
 from src.IBlock import IBlock
+from src.blocks import Blocks
+from pgu import gui
+from src.utils.settings import Main
+from src.utils.other import LOAD_FILE, SAVE_FILE
 import pygame
 
 
 class Engine(ABC):
 
-    blocks = {}
+    blocks: Blocks[str, IBlock] = Blocks[str, IBlock]()
 
     player_pos = Vector2(0, 0)
     player_scale = 1
@@ -23,6 +27,10 @@ class Engine(ABC):
     FPS_MAX = 0
     FPS_AVG = 0
 
+    _app = gui.App()
+    _settings = Main(align=0,valign=0)
+    SETTINGS = False
+
     _min_max_fps = [0]
     PER_SEC_FPS_MIN_MAX = 5
 
@@ -36,6 +44,8 @@ class Engine(ABC):
 
         self.width = win.get_width()
         self.height = win.get_height()
+
+        # self._app.init(self._settings)
         
         self.clock = pygame.time.Clock()
         
@@ -70,6 +80,16 @@ class Engine(ABC):
     def _set_input(self, key: int, pressed=True):
         self.input_keys[str(key)] = pressed
 
+    def open_settings(self):
+        self._settings.continue_btn.connect(gui.CLICK, self.close_settings, None)
+        self._background_settings = self.win.copy()
+        self._app.init(self._settings)
+        self.SETTINGS = True
+
+    def close_settings(self, _ = None):
+        self.SETTINGS = False
+        self._app.exit(self._app)
+
     def _event(self, events: list[Event]):
         
         keys_down = []
@@ -79,6 +99,9 @@ class Engine(ABC):
         mouse_up = []
 
         for event in events:
+            if self.SETTINGS:
+                self._app.event(event)
+
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit(0)
@@ -92,13 +115,21 @@ class Engine(ABC):
                 mouse_down.append(event.button)
             elif event.type == pygame.MOUSEBUTTONUP:
                 mouse_up.append(event.button)
+            elif event.type == LOAD_FILE:
+                self.blocks.load(event.file_path) # type: ignore
+            elif event.type == SAVE_FILE:
+                self.blocks.save(event.file_path) # type: ignore
 
         return keys_down, keys_up, mouse_down, mouse_up
 
-    def _system_update(self, keys: tuple[list, list, list, list]):
+    def _game_update(self, keys: tuple[list, list, list, list]):
         self.input(*keys)
         self.update(self.clock.get_time() / 1000)
         self.draw()
+
+    def _settings_update(self):
+        self.win.blit(self._background_settings, (0,0))
+        self._app.paint()
 
     def start(self):
         while True:
@@ -122,7 +153,10 @@ class Engine(ABC):
 
             keys = self._event(pygame.event.get())
             self.keys_down, self.keys_up, self.mouse_down, self.mouse_up = keys
-            self._system_update(keys)
+            if self.SETTINGS:
+                self._settings_update()
+            else:
+                self._game_update(keys)
             pygame.display.update()
     # def _draw_grid(self):
         # lines_cord = []

@@ -19,7 +19,7 @@ class IBlock(ABC):
     def __init__(self, pos: Vector2, size: Vector2) -> None:
         self.pos = pos
         self.size = size
-        self.image = pygame.image.load(f"./imgs/{self.NAME.lower()}.png").convert_alpha()
+        # self.image: Surface = pygame.image.load(f"./imgs/{self.NAME.lower()}.png").convert_alpha()
 
     @abstractmethod
     def update(self) -> bool:
@@ -47,7 +47,7 @@ class IBlock(ABC):
             ((round((self.pos.y + offset) * scale) // block_size) * block_size) + player_pos.y,
         )
     
-    def draw(self, win: Surface, block_pos: Vector2, scale: float = 1):
+    def draw(self, win: Surface, block_pos: Vector2, scale: float = 1, draw_image: bool = True):
         rect = (
                 block_pos.x,
                 block_pos.y, 
@@ -57,7 +57,8 @@ class IBlock(ABC):
             )
         pygame.draw.rect(win, self.color, rect=rect)
         # self.image.set_clip(rect)
-        win.blit(pygame.transform.scale(self.image, (rect[2], rect[3])), rect)
+        if draw_image:
+            win.blit(pygame.transform.scale(self.image, (rect[2], rect[3])), rect)
         # font = pygame.font.Font(None, round(14*scale))
         # text_surface = font.render(str(self.pos), True, (0, 0, 0))
         # text_pos = Vector2(

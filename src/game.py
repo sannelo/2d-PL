@@ -17,7 +17,7 @@ class Game(Engine):
     player_pos = Vector2(0, 0)
     player_scale = 1.0
 
-    DEBUG = True
+    DEBUG = False
 
     BLOCK_SIZE = 50
     SPEED = 10
@@ -27,6 +27,8 @@ class Game(Engine):
     MIN_SCALE = .1
 
     CURSOR_COLOR = rgb(149, 151, 170)
+    CURSOR: Surface
+
     BACKGROUND_COLOR = rgb(249, 213, 206)
     GRID_COLOR = rgb(243, 164, 169)
 
@@ -46,6 +48,9 @@ class Game(Engine):
 
         super().__init__(win)
         self.FPS = FPS
+        self.block_size = round(self.BLOCK_SIZE * self.player_scale)
+        self.select_block_type = get_by_index(self.select_block)
+        self.CURSOR = self.edit_mouse()
 
     def fixed_update(self):
         # print(round(time.time()))
@@ -64,6 +69,8 @@ class Game(Engine):
         self.coursore_color += self.coursore_color_adder
 
         self.mouse_pos = Vector2(pygame.mouse.get_pos())
+
+        self.CURSOR.set_alpha(round(255 * self.coursore_color))
 
         self.block_size = round(self.BLOCK_SIZE * self.player_scale)
 
@@ -102,11 +109,15 @@ class Game(Engine):
 
         if pygame.K_LEFT in keys_down:
             self.select_block -= 1
+            self.select_block_type = get_by_index(self.select_block)
+            self.CURSOR = self.edit_mouse()
         elif pygame.K_RIGHT in keys_down:
             self.select_block += 1
+            self.select_block_type = get_by_index(self.select_block)
+            self.CURSOR = self.edit_mouse()
         
-        if self.get_hotkey(pygame.K_LSHIFT, pygame.K_1, pygame.K_2, pygame.K_3):
-            print(self.blocks)
+        if self.get_hotkey(pygame.K_LSHIFT, pygame.K_ESCAPE):
+            self.open_settings()
         
         if self.get_input(pygame.K_RSHIFT): self.add_block()
     
@@ -127,17 +138,16 @@ class Game(Engine):
         # round(self.block_pos / self.player_scale) - self.player_pos # + self.screen_vec2
 
         pos_key = vec2str(pos)
+        # block = get_by_index(self.select_block)
 
-        if type(self.blocks.get(pos_key)) == get_by_index(self.select_block): return
+        if type(self.blocks.get(pos_key)) == self.select_block_type: return
         
         size = Vector2(
             self.BLOCK_SIZE,
             self.BLOCK_SIZE
         )
 
-        self.blocks[pos_key] = get_by_index(self.select_block)(pos, size)
-         # type: ignore
-        print("Block added in pos:", pos_key)
+        self.blocks[pos_key] = self.select_block_type(pos, size)
 
     def draw(self):
         self.win.fill(self.BACKGROUND_COLOR)
@@ -152,7 +162,7 @@ class Game(Engine):
             local_pos = block.toLocalPos(self.player_pos, self.player_scale)
 
             if local_pos.x + self.block_size > 0 and local_pos.x < self.width and local_pos.y + self.block_size > 0 and local_pos.y < self.height:
-                block.draw(self.win, local_pos, self.player_scale)
+                block.draw(self.win, local_pos, self.player_scale, draw_image=not self.DEBUG)
                 if self.DEBUG:
                     self.draw_text(local_pos, block.pos, 
                                 font_scale=round(14*self.player_scale), 
@@ -188,18 +198,17 @@ class Game(Engine):
 
     """
 
-    def draw_mouse(self):
+    def edit_mouse(self):
         s = pygame.Surface((self.block_size, self.block_size), pygame.SRCALPHA)
-        color = (
-            self.CURSOR_COLOR.r, 
-            self.CURSOR_COLOR.g, 
-            self.CURSOR_COLOR.b, 
-            round(255 * self.coursore_color)
-            )
+        block = self.select_block_type
         
-        s.fill(color=color)
+        s.fill(color=block.color)
+        s.blit(pygame.transform.scale(block.image, (self.block_size, self.block_size)), (0,0))
+        return s
 
-        self.win.blit(s, (self.block_pos.x, self.block_pos.y))
+    def draw_mouse(self):
+        self.win.blit(self.CURSOR, (self.block_pos.x, self.block_pos.y))
+        # 
         if self.DEBUG:
             self.draw_text(self.block_pos, self.mouse_pos, 
                         font_scale=round(14*self.player_scale), 
@@ -230,6 +239,10 @@ class Game(Engine):
             (((pos.x - offset.x) // self.block_size) * self.block_size) + offset.x,
             (((pos.y - offset.y) // self.block_size) * self.block_size) + offset.y,
         )
+    
+    def select_slot(self):
+
+        pass
     
 """
 
