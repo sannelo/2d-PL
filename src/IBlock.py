@@ -16,7 +16,9 @@ class IBlock(ABC):
     color: Color = Color(125, 125, 125)
     image: Surface
 
-    def __init__(self, pos: Vector2, size: Vector2) -> None:
+    blocks_around: tuple
+
+    def __init__(self, pos: Vector2, size: Vector2, blocks_around: tuple) -> None:
         self.pos = pos
         self.size = size
         # self.image: Surface = pygame.image.load(f"./imgs/{self.NAME.lower()}.png").convert_alpha()
@@ -24,14 +26,6 @@ class IBlock(ABC):
     @abstractmethod
     def update(self) -> bool:
         ...
-    
-    @abstractmethod
-    def get_dict(self):
-        return {"have": True}
-        return {
-            "position": self.pos,
-            "color": self.color
-        }
 
     def toLocalPos(self, player_pos: Vector2, scale: float) -> Vector2: # scale 0.1-2
         block_size = self.size.x * scale

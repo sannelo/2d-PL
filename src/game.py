@@ -1,7 +1,8 @@
 import datetime
+import config
 from pygame import Color, Surface, Vector2
 from src.IBlock import IBlock
-from src.blocks import NoneBlock, Blocks, ALL_BLOCKS, ALL_BLOCKS_TYPE, get_by_index
+from src.blocks import NoneBlock, Blocks, ALL_BLOCKS, ALL_BLOCKS_TYPE, get_by_index, Direct
 from src.utils.engine import Engine
 from src.utils.drawer import get_grid
 from src.utils.other import rgb, str2Vec, vec2str, Coordinate
@@ -16,21 +17,8 @@ class Game(Engine):
 
     player_pos = Vector2(0, 0)
     player_scale = 1.0
-
-    DEBUG = False
-
-    BLOCK_SIZE = 50
-    SPEED = 10
-    SPRENT_SPEED = 10
-
-    MAX_SCALE = 2
-    MIN_SCALE = .1
-
-    CURSOR_COLOR = rgb(149, 151, 170)
+    
     CURSOR: Surface
-
-    BACKGROUND_COLOR = rgb(249, 213, 206)
-    GRID_COLOR = rgb(243, 164, 169)
 
     coursore_color_adder = -.01
     coursore_color = .9
@@ -47,14 +35,18 @@ class Game(Engine):
         win = pygame.display.set_mode(size, flags, depth, display, vsync)
 
         super().__init__(win)
-        self.FPS = FPS
-        self.block_size = round(self.BLOCK_SIZE * self.player_scale)
+        config.FPS = FPS
+        self.block_size = round(config.BLOCK_SIZE * self.player_scale)
         self.select_block_type = get_by_index(self.select_block)
         self.CURSOR = self.edit_mouse()
 
     def fixed_update(self):
         # print(round(time.time()))
         pass
+
+    def settings_update(self):
+        if pygame.K_ESCAPE in self.keys_down:
+            self.close_settings()
 
     def update(self, _):
         pygame.display.set_caption(f"Selected: {get_by_index(self.select_block).__name__} Scale: {round(self.player_scale, 2)} Position: {self.player_pos} {self.FPS_NOW}:{self.FPS_MAX}:{self.FPS_MIN}")
@@ -72,20 +64,20 @@ class Game(Engine):
 
         self.CURSOR.set_alpha(round(255 * self.coursore_color))
 
-        self.block_size = round(self.BLOCK_SIZE * self.player_scale)
+        self.block_size = round(config.BLOCK_SIZE * self.player_scale)
 
         self.block_pos = self.grid_alignment(self.mouse_pos)        
 
     def input(self, keys_down: list[int], keys_up: list[int], mouse_down: list[int], mouse_up: list[int]):
 
-        if self.get_input(pygame.K_UP): self.player_scale += .02
-        elif self.get_input(pygame.K_DOWN): self.player_scale -= .02
-        self.player_scale = round(max(self.MIN_SCALE, min(self.player_scale, self.MAX_SCALE)), 2)
+        if self.get_input(pygame.K_UP): self.player_scale += config.ADD_SCALE
+        elif self.get_input(pygame.K_DOWN): self.player_scale -= config.ADD_SCALE
+        self.player_scale = round(max(config.MIN_SCALE, min(self.player_scale, config.MAX_SCALE)), 2)
 
-        if self.get_input(pygame.K_w): self.player_pos.y += self.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(self.SPEED * self.player_scale)
-        if self.get_input(pygame.K_a): self.player_pos.x += self.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(self.SPEED * self.player_scale)
-        if self.get_input(pygame.K_s): self.player_pos.y -= self.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(self.SPEED * self.player_scale)
-        if self.get_input(pygame.K_d): self.player_pos.x -= self.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(self.SPEED * self.player_scale)
+        if self.get_input(pygame.K_w): self.player_pos.y += config.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(config.SPEED * self.player_scale)
+        if self.get_input(pygame.K_a): self.player_pos.x += config.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(config.SPEED * self.player_scale)
+        if self.get_input(pygame.K_s): self.player_pos.y -= config.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(config.SPEED * self.player_scale)
+        if self.get_input(pygame.K_d): self.player_pos.x -= config.SPRENT_SPEED if self.get_input(pygame.K_LSHIFT) else round(config.SPEED * self.player_scale)
 
         if self.get_hotkey(pygame.K_LCTRL, pygame.K_h):
             self.player_pos = Vector2(0, 0)
@@ -94,12 +86,11 @@ class Game(Engine):
         if self.get_hotkey(pygame.K_LCTRL, pygame.K_c):
             self.blocks.clear()
         if self.get_hotkey(pygame.K_LSHIFT, pygame.K_p):
-            now = datetime.datetime.now()
-            formatted_date = now.strftime("%d-%m-%Y_%S:%M:%H")
+            formatted_date = datetime.datetime.now().strftime("%d-%m-%Y_%H:%M:%S")
             pygame.image.save(self.win, f"./screenshots/{formatted_date}.png")
 
         if pygame.K_F1 in keys_down:
-            self.DEBUG = not self.DEBUG
+            config.DEBUG = not config.DEBUG
 
         if 1 in mouse_down:
             self.add_block()
@@ -116,15 +107,15 @@ class Game(Engine):
             self.select_block_type = get_by_index(self.select_block)
             self.CURSOR = self.edit_mouse()
         
-        if self.get_hotkey(pygame.K_LSHIFT, pygame.K_ESCAPE):
+        if pygame.K_ESCAPE in keys_down:
             self.open_settings()
         
         if self.get_input(pygame.K_RSHIFT): self.add_block()
     
     def remove_block(self):
         pos = Vector2(
-            (round((self.block_pos.x - self.player_pos.x) / self.player_scale) // self.BLOCK_SIZE) * self.BLOCK_SIZE,
-            (round((self.block_pos.y - self.player_pos.y) / self.player_scale) // self.BLOCK_SIZE) * self.BLOCK_SIZE,
+            (round((self.block_pos.x - self.player_pos.x) / self.player_scale) // config.BLOCK_SIZE) * config.BLOCK_SIZE,
+            (round((self.block_pos.y - self.player_pos.y) / self.player_scale) // config.BLOCK_SIZE) * config.BLOCK_SIZE,
         ) 
 
         self.blocks.pop(vec2str(pos))
@@ -132,8 +123,8 @@ class Game(Engine):
     def add_block(self):
         # ((offset // block_size) * block_size)
         pos = Vector2(
-            (round((self.block_pos.x - self.player_pos.x) / self.player_scale) // self.BLOCK_SIZE) * self.BLOCK_SIZE,
-            (round((self.block_pos.y - self.player_pos.y) / self.player_scale) // self.BLOCK_SIZE) * self.BLOCK_SIZE,
+            (round((self.block_pos.x - self.player_pos.x) / self.player_scale) // config.BLOCK_SIZE) * config.BLOCK_SIZE,
+            (round((self.block_pos.y - self.player_pos.y) / self.player_scale) // config.BLOCK_SIZE) * config.BLOCK_SIZE,
         ) 
         # round(self.block_pos / self.player_scale) - self.player_pos # + self.screen_vec2
 
@@ -143,14 +134,24 @@ class Game(Engine):
         if type(self.blocks.get(pos_key)) == self.select_block_type: return
         
         size = Vector2(
-            self.BLOCK_SIZE,
-            self.BLOCK_SIZE
+            config.BLOCK_SIZE,
+            config.BLOCK_SIZE
         )
 
-        self.blocks[pos_key] = self.select_block_type(pos, size)
+        self.blocks[pos_key] = self.select_block_type(pos, size, self.get_blocks_around(pos))
+    
+    def get_blocks_around(self, pos: Vector2) -> tuple[IBlock | None, IBlock | None, IBlock | None, IBlock | None]:
+        blocks: tuple[IBlock | None, IBlock | None, IBlock | None, IBlock | None] = (
+            self.blocks.get(vec2str(pos - Direct.UP.value)), # UP
+            self.blocks.get(vec2str(pos - Direct.DOWN.value)), # DOWN
+            self.blocks.get(vec2str(pos - Direct.LEFT.value)), # LEFT
+            self.blocks.get(vec2str(pos - Direct.RIGHT.value))  # RIGHT
+            )
+        return blocks
+
 
     def draw(self):
-        self.win.fill(self.BACKGROUND_COLOR)
+        self.win.fill(config.BACKGROUND_COLOR)
         self.draw_blocks()
         self.draw_mouse()
         self.draw_grid()
@@ -162,8 +163,8 @@ class Game(Engine):
             local_pos = block.toLocalPos(self.player_pos, self.player_scale)
 
             if local_pos.x + self.block_size > 0 and local_pos.x < self.width and local_pos.y + self.block_size > 0 and local_pos.y < self.height:
-                block.draw(self.win, local_pos, self.player_scale, draw_image=not self.DEBUG)
-                if self.DEBUG:
+                block.draw(self.win, local_pos, self.player_scale, draw_image=not config.DEBUG)
+                if config.DEBUG:
                     self.draw_text(local_pos, block.pos, 
                                 font_scale=round(14*self.player_scale), 
                                 pos_x=local_pos.x + 5 * self.player_scale, 
@@ -199,17 +200,17 @@ class Game(Engine):
     """
 
     def edit_mouse(self):
-        s = pygame.Surface((self.block_size, self.block_size), pygame.SRCALPHA)
+        s = pygame.Surface((config.BLOCK_SIZE, config.BLOCK_SIZE), pygame.SRCALPHA)
         block = self.select_block_type
         
         s.fill(color=block.color)
-        s.blit(pygame.transform.scale(block.image, (self.block_size, self.block_size)), (0,0))
+        s.blit(pygame.transform.scale(block.image, (config.BLOCK_SIZE, config.BLOCK_SIZE)), (0,0))
         return s
 
     def draw_mouse(self):
-        self.win.blit(self.CURSOR, (self.block_pos.x, self.block_pos.y))
+        self.win.blit(pygame.transform.scale(self.CURSOR, (self.block_size, self.block_size)), (self.block_pos.x, self.block_pos.y))
         # 
-        if self.DEBUG:
+        if config.DEBUG:
             self.draw_text(self.block_pos, self.mouse_pos, 
                         font_scale=round(14*self.player_scale), 
                         pos_x=self.block_pos.x + 5 * self.player_scale, 
@@ -227,7 +228,7 @@ class Game(Engine):
             round(self.player_pos.y % self.block_size)
         )
         lines_cord = get_grid(offset, self.block_size, (self.width, self.height))
-        pygame.draw.lines(self.win, self.GRID_COLOR, False, lines_cord, width=2) # round(6*self.player_scale)
+        pygame.draw.lines(self.win, config.GRID_COLOR, False, lines_cord, width=2) # round(6*self.player_scale)
     
     def grid_alignment(self, pos: Vector2):
         offset = Vector2(

@@ -1,12 +1,12 @@
 from abc import ABC, abstractclassmethod, abstractmethod
-import json
+import config
 from pygame import Color, Surface, Vector2
 from pygame.event import Event
 from src.IBlock import IBlock
 from src.blocks import Blocks
 from pgu import gui
-from src.utils.settings import Main
-from src.utils.other import LOAD_FILE, SAVE_FILE
+from src.utils.user_interface import Main
+from src.utils.events import LOAD_FILE, SAVE_FILE, EDIT_COLORS
 import pygame
 
 
@@ -17,10 +17,10 @@ class Engine(ABC):
     player_pos = Vector2(0, 0)
     player_scale = 1
 
-    BLOCK_SIZE = 50
-    SPEED = 5
+    # BLOCK_SIZE = 50
+    # SPEED = 5
 
-    FPS = 60
+    # FPS = 60
     FPS_NOW = 0
 
     FPS_MIN = 0
@@ -44,8 +44,6 @@ class Engine(ABC):
 
         self.width = win.get_width()
         self.height = win.get_height()
-
-        # self._app.init(self._settings)
         
         self.clock = pygame.time.Clock()
         
@@ -119,6 +117,12 @@ class Engine(ABC):
                 self.blocks.load(event.file_path) # type: ignore
             elif event.type == SAVE_FILE:
                 self.blocks.save(event.file_path) # type: ignore
+            elif event.type == EDIT_COLORS:
+                background_color = Color(event.background_color[0], event.background_color[1], event.background_color[2])
+                config.BACKGROUND_COLOR = background_color
+
+                grid_color = Color(event.grid_color[0], event.grid_color[1], event.grid_color[2])
+                config.GRID_COLOR = Color(grid_color)
 
         return keys_down, keys_up, mouse_down, mouse_up
 
@@ -127,13 +131,18 @@ class Engine(ABC):
         self.update(self.clock.get_time() / 1000)
         self.draw()
 
-    def _settings_update(self):
-        self.win.blit(self._background_settings, (0,0))
+    def _draw_settings(self):
+        background = pygame.transform.scale(self._background_settings, pygame.display.get_window_size())
+        self.win.blit(background, (0,0))
         self._app.paint()
+
+    @abstractmethod
+    def settings_update(self):
+        ...
 
     def start(self):
         while True:
-            self.clock.tick(self.FPS)
+            self.clock.tick(config.FPS)
 
             self._min_max_fps.append(self.FPS_NOW)
 
@@ -154,7 +163,9 @@ class Engine(ABC):
             keys = self._event(pygame.event.get())
             self.keys_down, self.keys_up, self.mouse_down, self.mouse_up = keys
             if self.SETTINGS:
-                self._settings_update()
+                self._app.resize()
+                self._draw_settings()
+                self.settings_update()
             else:
                 self._game_update(keys)
             pygame.display.update()

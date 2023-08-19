@@ -2,9 +2,8 @@ from typing import Sequence, Tuple, Union
 from pygame import Color, Vector2
 import time, pygame
 
-# "file_path": path
-LOAD_FILE = pygame.locals.USEREVENT + 8  # type: ignore
-SAVE_FILE = pygame.locals.USEREVENT + 9  # type: ignore
+# LOAD_FILE = pygame.locals.USEREVENT + 8  # type: ignore
+# SAVE_FILE = pygame.locals.USEREVENT + 9  # type: ignore
 
 Coordinate = Union[Tuple[float, float], Sequence[float], Vector2]
 

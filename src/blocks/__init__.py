@@ -1,8 +1,14 @@
-import pickle
+import pickle, config
 from typing import Dict, Generic, TypeVar
 from src.blocks._blocks import NewVar, NoneBlock, Start
-
+from pygame import Vector2
 from enum import Enum
+
+class Direct(Enum):
+    UP = Vector2(0, -50)
+    DOWN = Vector2(0, 50)
+    LEFT = Vector2(-50, 0)
+    RIGHT = Vector2(50, 0)
 
 class BlockType(Enum):
     NONEBLOCK = NoneBlock
