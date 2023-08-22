@@ -1,7 +1,9 @@
 import datetime
+from types import NoneType
+from src.code.code_session import CodeSession
 import config
 from pygame import Color, Surface, Vector2
-from src.IBlock import IBlock
+from src.blocks.IBlock import IBlock
 from src.blocks import NoneBlock, Blocks, ALL_BLOCKS, ALL_BLOCKS_TYPE, get_by_index, Direct
 from src.utils.engine import Engine
 from src.utils.drawer import get_grid
@@ -39,17 +41,24 @@ class Game(Engine):
         self.block_size = round(config.BLOCK_SIZE * self.player_scale)
         self.select_block_type = get_by_index(self.select_block)
         self.CURSOR = self.edit_mouse()
+        self.session = CodeSession()
 
     def fixed_update(self):
-        # print(round(time.time()))
-        pass
+        # print("step")
+        try:
+            self.session.step()
+        except AttributeError as err:
+            if config.DEBUG:
+                print(err)
+        except:
+            pass
 
     def settings_update(self):
         if pygame.K_ESCAPE in self.keys_down:
             self.close_settings()
 
     def update(self, _):
-        pygame.display.set_caption(f"Selected: {get_by_index(self.select_block).__name__} Scale: {round(self.player_scale, 2)} Position: {self.player_pos} {self.FPS_NOW}:{self.FPS_MAX}:{self.FPS_MIN}")
+        pygame.display.set_caption(f"Selected: {get_by_index(self.select_block).__name__} Speed: {round(config.FIX_UPDATE_TIME, 2)} Position: {self.player_pos} {self.FPS_NOW}:{self.FPS_MAX}:{self.FPS_MIN}")
 
         self.width = self.win.get_width()
         self.height = self.win.get_height()
@@ -92,11 +101,26 @@ class Game(Engine):
         if pygame.K_F1 in keys_down:
             config.DEBUG = not config.DEBUG
 
+        if 61 in keys_down:
+            config.FIX_UPDATE_TIME = min(config.FIX_UPDATE_TIME + .1, 5)
+        if pygame.K_MINUS in keys_down:
+            config.FIX_UPDATE_TIME = max(config.FIX_UPDATE_TIME - .1, .1)
+
         if 1 in mouse_down:
             self.add_block()
 
         if 3 in mouse_down:
             self.remove_block()
+
+        if self.get_hotkey(pygame.K_LCTRL, pygame.K_e):
+            pos = Vector2(
+            (round((self.block_pos.x - self.player_pos.x) / self.player_scale) // config.BLOCK_SIZE) * config.BLOCK_SIZE,
+            (round((self.block_pos.y - self.player_pos.y) / self.player_scale) // config.BLOCK_SIZE) * config.BLOCK_SIZE,
+            ) 
+            block = self.blocks.get(vec2str(pos))
+            if block:
+                block.exec(self.session)
+                # print("Запуск блока по позиции: " + str(pos))
 
         if pygame.K_LEFT in keys_down:
             self.select_block -= 1
@@ -138,16 +162,35 @@ class Game(Engine):
             config.BLOCK_SIZE
         )
 
-        self.blocks[pos_key] = self.select_block_type(pos, size, self.get_blocks_around(pos))
+        block = self.select_block_type(pos, size)
+        block_around = self.updget_blocks_around(pos, block)
+        block.blocks_around = block_around # type: ignore
+        self.blocks[pos_key] = block
     
-    def get_blocks_around(self, pos: Vector2) -> tuple[IBlock | None, IBlock | None, IBlock | None, IBlock | None]:
-        blocks: tuple[IBlock | None, IBlock | None, IBlock | None, IBlock | None] = (
-            self.blocks.get(vec2str(pos - Direct.UP.value)), # UP
-            self.blocks.get(vec2str(pos - Direct.DOWN.value)), # DOWN
-            self.blocks.get(vec2str(pos - Direct.LEFT.value)), # LEFT
-            self.blocks.get(vec2str(pos - Direct.RIGHT.value))  # RIGHT
-            )
-        return blocks
+    def updget_blocks_around(self, pos: Vector2, block: IBlock) -> tuple[IBlock | None, IBlock | None, IBlock | None, IBlock | None]:
+        UP = self.blocks.get(vec2str(pos - Direct.UP.value))       # UP
+        RIGHT = self.blocks.get(vec2str(pos - Direct.RIGHT.value)) # RIGHT
+        DOWN = self.blocks.get(vec2str(pos - Direct.DOWN.value))   # DOWN
+        LEFT = self.blocks.get(vec2str(pos - Direct.LEFT.value))   # LEFT
+        
+        if UP:
+            tuple_list = list(UP.blocks_around)
+            tuple_list[0] = block
+            UP.blocks_around = tuple(tuple_list)
+        if RIGHT:
+            tuple_list = list(RIGHT.blocks_around)
+            tuple_list[1] = block
+            RIGHT.blocks_around = tuple(tuple_list)
+        if DOWN:
+            tuple_list = list(DOWN.blocks_around)
+            tuple_list[2] = block
+            DOWN.blocks_around = tuple(tuple_list)
+        if LEFT:
+            tuple_list = list(LEFT.blocks_around)
+            tuple_list[3] = block
+            LEFT.blocks_around = tuple(tuple_list)
+
+        return DOWN, LEFT, UP, RIGHT
 
 
     def draw(self):
@@ -164,8 +207,9 @@ class Game(Engine):
 
             if local_pos.x + self.block_size > 0 and local_pos.x < self.width and local_pos.y + self.block_size > 0 and local_pos.y < self.height:
                 block.draw(self.win, local_pos, self.player_scale, draw_image=not config.DEBUG)
+                blocks_around = 0
                 if config.DEBUG:
-                    self.draw_text(local_pos, block.pos, 
+                    self.draw_text(local_pos, block.pos, [1 if i else 0 for i in block.blocks_around], 
                                 font_scale=round(14*self.player_scale), 
                                 pos_x=local_pos.x + 5 * self.player_scale, 
                                 pos_y=local_pos.y + 5 * self.player_scale)

@@ -2,7 +2,7 @@ from abc import ABC, abstractclassmethod, abstractmethod
 import config
 from pygame import Color, Surface, Vector2
 from pygame.event import Event
-from src.IBlock import IBlock
+from src.blocks.IBlock import IBlock
 from src.blocks import Blocks
 from pgu import gui
 from src.utils.user_interface import Main
@@ -156,7 +156,7 @@ class Engine(ABC):
 
             # print(self.clock.get_time())
             self._delta += self.clock.get_time() / 1000
-            if (self._delta) >= 1:
+            if (self._delta) >= config.FIX_UPDATE_TIME:
                 self.fixed_update()
                 self._delta = 0
 

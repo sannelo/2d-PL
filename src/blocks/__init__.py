@@ -1,6 +1,6 @@
 import pickle, config
 from typing import Dict, Generic, TypeVar
-from src.blocks._blocks import NewVar, NoneBlock, Start
+from src.blocks._blocks import NewVar, NoneBlock, Start, IOend, Zero, One, Print
 from pygame import Vector2
 from enum import Enum
 
@@ -14,6 +14,10 @@ class BlockType(Enum):
     NONEBLOCK = NoneBlock
     NEW_VAR_BLOCK = NewVar
     START = Start
+    IOEND = IOend
+    ZERO = Zero
+    ONE = One
+    PRINT = Print
 
 ALL_BLOCKS = {**{block.value.NAME: block.value for block in BlockType}}
 ALL_BLOCKS_TYPE = TypeVar("ALL_BLOCKS_TYPE", *(block.value for block in BlockType)) # type: ignore

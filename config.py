@@ -5,6 +5,8 @@ def rgb(r, g, b, a=255):
     return Color(r, g, b, a=a)
 
 
+FIX_UPDATE_TIME = .1
+
 FPS = 60
 DEBUG = False
 

@@ -1,14 +1,18 @@
 from abc import ABC, ABCMeta, abstractmethod, abstractclassmethod, abstractproperty
+from typing import Any, Self
 from pygame import Rect, Surface
 import pygame
 from pygame.math import Vector2
 from pygame import Color
+
+from src.code.code_session import CodeSession
 
 
 class IBlock(ABC):
 
     NAME = "INTERFACE"
 
+    EXECUTABLE = True
     
     pos: Vector2 = Vector2(0, 0)
     size: Vector2 = Vector2(50, 50)
@@ -16,15 +20,21 @@ class IBlock(ABC):
     color: Color = Color(125, 125, 125)
     image: Surface
 
-    blocks_around: tuple
+    direction: int = 0
 
-    def __init__(self, pos: Vector2, size: Vector2, blocks_around: tuple) -> None:
+    blocks_around: tuple[Self, Self, Self, Self]
+
+    def __init__(self, pos: Vector2, size: Vector2) -> None:
         self.pos = pos
         self.size = size
         # self.image: Surface = pygame.image.load(f"./imgs/{self.NAME.lower()}.png").convert_alpha()
 
     @abstractmethod
     def update(self) -> bool:
+        ...
+
+    @abstractmethod
+    def exec(self, sessino: CodeSession, **params) -> Any:
         ...
 
     def toLocalPos(self, player_pos: Vector2, scale: float) -> Vector2: # scale 0.1-2
@@ -64,6 +74,25 @@ class IBlock(ABC):
     def set_color(self, color: Color):
         self.color = color
         return self
+    
+    def next(self, session: CodeSession):
+        block, direction = self.get_direct()
+        # print(block, direction)
+        if block and direction is not None:
+            # print("Blockk addet to queue.")
+            block.direction = direction
+            session.put(block)
+    
+    def next_no_wait(self, direction: int):
+        block = self.blocks_around[direction]
+        if block and direction is not None:
+            block.direction = direction
+
+    def get_direct(self):
+        for block, index in zip(self.blocks_around, range(4)):
+            if block and block.EXECUTABLE:
+                return block, index
+        return None, None
 
 """
 class foo:
